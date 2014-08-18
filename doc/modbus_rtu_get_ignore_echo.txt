@@ -1,0 +1,41 @@
+modbus_rtu_get_ignore_echo(3)
+=============================
+
+
+NAME
+----
+modbus_rtu_get_ignore_echo - get ignore echo
+
+
+SYNOPSIS
+--------
+*int modbus_rtu_get_ignore_echo(modbus_t *'ctx');*
+
+
+DESCRIPTION
+-----------
+The *modbus_rtu_get_ignore_echo()* function shall set the selected ignore echo
+mode:
+
+*MODBUS_RTU_IGNORE_ECHO_NONE*:: the echo is not ignored
+
+*MODBUS_RTU_IGNORE_ECHO*:: the echo is ignored. After sending a modbus message
+
+The ignore echo mode is only supported for modbus rtu master.
+ 
+
+RETURN VALUE
+------------
+The function shall return `MODBUS_RTU_IGNORE_ECHO_NONE` or `MODBUS_RTU_IGNORE_ECHO`
+if successful. Otherwise it shall return -1 and set errno to one of the values defined below.
+
+ERRORS
+------
+*EINVAL*::
+The current libmodbus backend is not RTU.
+
+
+AUTHORS
+-------
+The libmodbus documentation was written by Stéphane Raimbault
+<stephane.raimbault@gmail.com>

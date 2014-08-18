@@ -83,6 +83,7 @@ typedef struct _modbus_rtu {
     int rts;
     int onebyte_time;
 #endif
+    int ignore_echo;
     /* To handle many slaves on the same link */
     int confirmation_to_ignore;
 } modbus_rtu_t;

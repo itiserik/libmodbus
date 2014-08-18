@@ -46,6 +46,12 @@ MODBUS_API int modbus_rtu_get_serial_mode(modbus_t *ctx);
 MODBUS_API int modbus_rtu_set_rts(modbus_t *ctx, int mode);
 MODBUS_API int modbus_rtu_get_rts(modbus_t *ctx);
 
+#define MODBUS_RTU_IGNORE_ECHO_NONE   0
+#define MODBUS_RTU_IGNORE_ECHO_ON     1
+
+MODBUS_API int modbus_rtu_set_ignore_echo(modbus_t *ctx, int mode);
+MODBUS_API int modbus_rtu_get_ignore_echo(modbus_t *ctx);
+
 MODBUS_END_DECLS
 
 #endif /* MODBUS_RTU_H */

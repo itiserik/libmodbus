@@ -282,10 +282,11 @@ static ssize_t _modbus_rtu_send(modbus_t *ctx, const uint8_t *req, int req_lengt
     DWORD n_bytes = 0;
     return (WriteFile(ctx_rtu->w_ser.fd, req, req_length, &n_bytes, NULL)) ? (ssize_t)n_bytes : -1;
 #else
+    ssize_t size;
 #if HAVE_DECL_TIOCM_RTS
     modbus_rtu_t *ctx_rtu = ctx->backend_data;
     if (ctx_rtu->rts != MODBUS_RTU_RTS_NONE) {
-        ssize_t size;
+        
 
         if (ctx->debug) {
             fprintf(stderr, "Sending request using RTS signal\n");
@@ -293,19 +294,25 @@ static ssize_t _modbus_rtu_send(modbus_t *ctx, const uint8_t *req, int req_lengt
 
         _modbus_rtu_ioctl_rts(ctx->s, ctx_rtu->rts == MODBUS_RTU_RTS_UP);
         usleep(_MODBUS_RTU_TIME_BETWEEN_RTS_SWITCH);
-
-        size = write(ctx->s, req, req_length);
-
-        usleep(ctx_rtu->onebyte_time * req_length + _MODBUS_RTU_TIME_BETWEEN_RTS_SWITCH);
-        _modbus_rtu_ioctl_rts(ctx->s, ctx_rtu->rts != MODBUS_RTU_RTS_UP);
-
-        return size;
-    } else {
-#endif
-        return write(ctx->s, req, req_length);
-#if HAVE_DECL_TIOCM_RTS
     }
 #endif
+    size = write(ctx->s, req, req_length);
+#if HAVE_DECL_TIOCM_RTS
+    if (ctx_rtu->rts != MODBUS_RTU_RTS_NONE) {
+    
+        usleep(ctx_rtu->onebyte_time * req_length + _MODBUS_RTU_TIME_BETWEEN_RTS_SWITCH);
+        _modbus_rtu_ioctl_rts(ctx->s, ctx_rtu->rts != MODBUS_RTU_RTS_UP);
+    }
+#endif        
+    if (ctx_rtu->ignore_echo) {
+	    uint8_t rsp[_MIN_REQ_LENGTH];
+	    int rc = _modbus_receive_msg(ctx, rsp, MSG_INDICATION);		
+        if (ctx->debug) {
+            fprintf(stderr, "ignoring echo %d\n",rc);
+        }
+    }
+	return size;
+    
 #endif
 }
 
@@ -1033,6 +1040,46 @@ int modbus_rtu_get_rts(modbus_t *ctx)
         errno = ENOTSUP;
         return -1;
 #endif
+    } else {
+        errno = EINVAL;
+        return -1;
+    }
+}
+
+int modbus_rtu_set_ignore_echo(modbus_t *ctx, int mode)
+{
+    if (ctx == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    if (ctx->backend->backend_type == _MODBUS_BACKEND_TYPE_RTU) {
+        modbus_rtu_t *ctx_rtu = ctx->backend_data;
+
+        if (mode == MODBUS_RTU_IGNORE_ECHO_NONE || mode == MODBUS_RTU_IGNORE_ECHO_ON) {
+            ctx_rtu->ignore_echo = mode;
+
+            return 0;
+        } else {
+            errno = EINVAL;
+            return -1;
+        }
+    }
+    /* Wrong backend or invalid mode specified */
+    errno = EINVAL;
+    return -1;
+}
+
+int modbus_rtu_get_ignore_echo(modbus_t *ctx)
+{
+    if (ctx == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    if (ctx->backend->backend_type == _MODBUS_BACKEND_TYPE_RTU) {
+        modbus_rtu_t *ctx_rtu = ctx->backend_data;
+        return ctx_rtu->ignore_echo;
     } else {
         errno = EINVAL;
         return -1;
