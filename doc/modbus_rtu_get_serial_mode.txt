@@ -29,6 +29,9 @@ currently used by the libmodbus context:
  systems. This standard is widely used for communications in industrial
  automation because it can be used effectively over long distances and in
  electrically noisy environments.
+ 
+*MODBUS_RTU_RS485_RX_DURING_TX*:: see MODBUS_RTU_RS485, but now the receivers is
+ enabled during transmitting.
 
 This function is only available on Linux kernels 2.6.28 onwards and can only be
 used with a context using a RTU backend.
@@ -36,9 +39,9 @@ used with a context using a RTU backend.
 
 RETURN VALUE
 ------------
-The function shall return `MODBUS_RTU_RS232` or `MODBUS_RTU_RS485` if
-successful. Otherwise it shall return -1 and set errno to one of the values
-defined below.
+The function shall return `MODBUS_RTU_RS232`, `MODBUS_RTU_RS485` or 
+`MODBUS_RTU_RS485_RX_DURING_TX` if successful. Otherwise it shall return -1 and
+set errno to one of the values defined below.
 
 
 ERRORS
