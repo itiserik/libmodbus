@@ -1319,6 +1319,14 @@ static int write_single(modbus_t *ctx, int function, int addr, int value)
 
     rc = send_msg(ctx, req, req_length);
     if (rc > 0) {
+        if (ctx->slave == MODBUS_BROADCAST_ADDRESS) {
+            if (ctx->debug) {
+                printf("Broadcast; sleeping response timeout\n");
+            }
+            _sleep_response_timeout(ctx);
+            return 0;
+        }
+        
         /* Used by write_bit and write_register */
         uint8_t rsp[MAX_MESSAGE_LENGTH];
 
@@ -1405,6 +1413,13 @@ int modbus_write_bits(modbus_t *ctx, int addr, int nb, const uint8_t *src)
 
     rc = send_msg(ctx, req, req_length);
     if (rc > 0) {
+        if (ctx->slave == MODBUS_BROADCAST_ADDRESS) {
+            if (ctx->debug) {
+                printf("Broadcast; sleeping response timeout\n");
+            }
+            _sleep_response_timeout(ctx);
+            return 0;
+        }
         uint8_t rsp[MAX_MESSAGE_LENGTH];
 
         rc = _modbus_receive_msg(ctx, rsp, MSG_CONFIRMATION);
@@ -1455,6 +1470,13 @@ int modbus_write_registers(modbus_t *ctx, int addr, int nb, const uint16_t *src)
 
     rc = send_msg(ctx, req, req_length);
     if (rc > 0) {
+        if (ctx->slave == MODBUS_BROADCAST_ADDRESS) {
+            if (ctx->debug) {
+                printf("Broadcast; sleeping response timeout\n");
+            }
+            _sleep_response_timeout(ctx);
+            return 0;
+        }
         uint8_t rsp[MAX_MESSAGE_LENGTH];
 
         rc = _modbus_receive_msg(ctx, rsp, MSG_CONFIRMATION);
@@ -1487,6 +1509,14 @@ int modbus_mask_write_register(modbus_t *ctx, int addr, uint16_t and_mask, uint1
 
     rc = send_msg(ctx, req, req_length);
     if (rc > 0) {
+        if (ctx->slave == MODBUS_BROADCAST_ADDRESS) {
+            if (ctx->debug) {
+                printf("Broadcast; sleeping response timeout\n");
+            }
+            _sleep_response_timeout(ctx);
+            return 0;
+        }
+            
         /* Used by write_bit and write_register */
         uint8_t rsp[MAX_MESSAGE_LENGTH];
 
