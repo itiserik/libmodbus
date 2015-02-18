@@ -1,8 +1,7 @@
 /*
  * Copyright © 2008-2014 Stéphane Raimbault <stephane.raimbault@gmail.com>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the BSD License.
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
 #include <stdio.h>
@@ -538,7 +537,8 @@ int main(int argc, char *argv[])
                                 old_response_to_usec);
 
     if (use_backend == TCP) {
-        /* Test server is only able to test byte timeout with the TCP backend */
+        /* The test server is only able to test byte timeouts with the TCP
+         * backend */
 
         /* Timeout of 3ms between bytes */
         modbus_set_byte_timeout(ctx, 0, 3000);
@@ -551,7 +551,7 @@ int main(int argc, char *argv[])
         usleep(11 * 5000);
         modbus_flush(ctx);
 
-        /* Timeout of 10ms between bytes */
+        /* Timeout of 7ms between bytes */
         modbus_set_byte_timeout(ctx, 0, 7000);
         rc = modbus_read_registers(ctx, UT_REGISTERS_ADDRESS_BYTE_SLEEP_5_MS,
                                    1, tab_rp_registers);
@@ -744,8 +744,19 @@ int send_crafted_request(modbus_t *ctx, int function,
 {
     const int EXCEPTION_RC = 2;
     uint8_t rsp[MODBUS_TCP_MAX_ADU_LENGTH];
+    int j;
+    uint32_t old_response_to_sec;
+    uint32_t old_response_to_usec;
 
-    for (int j=0; j<2; j++) {
+    /* This requests can generate flushes server side so we need a higher
+     * response timeout than the server. The server uses the defined response
+     * timeout to sleep before flushing.
+     * The old timeouts are restored at the end.
+     */
+    modbus_get_response_timeout(ctx, &old_response_to_sec, &old_response_to_usec);
+    modbus_set_response_timeout(ctx, 0, 600000);
+
+    for (j=0; j<2; j++) {
         int rc;
 
         req[1] = function;
@@ -779,8 +790,9 @@ int send_crafted_request(modbus_t *ctx, int function,
                     rsp[backend_offset] == (0x80 + function) &&
                     rsp[backend_offset + 1] == MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE, "");
     }
-
+    modbus_set_response_timeout(ctx, old_response_to_sec, old_response_to_usec);
     return 0;
 close:
+    modbus_set_response_timeout(ctx, old_response_to_sec, old_response_to_usec);
     return -1;
 }

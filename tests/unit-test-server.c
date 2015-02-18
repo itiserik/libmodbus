@@ -1,8 +1,7 @@
 /*
  * Copyright © 2008-2014 Stéphane Raimbault <stephane.raimbault@gmail.com>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the BSD License.
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
 #include <stdio.h>
@@ -84,7 +83,8 @@ int main(int argc, char*argv[])
         return -1;
     }
 
-    /* Unit tests of modbus_mapping_new (tests would not be sufficient if two nb_* were identical) */
+    /* Unit tests of modbus_mapping_new (tests would not be sufficient if two
+       nb_* were identical) */
     if (mb_mapping->nb_bits != UT_BITS_ADDRESS + UT_BITS_NB) {
         printf("Invalid nb bits (%d != %d)\n", UT_BITS_ADDRESS + UT_BITS_NB, mb_mapping->nb_bits);
         modbus_free(ctx);
@@ -104,7 +104,7 @@ int main(int argc, char*argv[])
     }
 
     if (mb_mapping->nb_input_registers != UT_INPUT_REGISTERS_ADDRESS + UT_INPUT_REGISTERS_NB) {
-        printf("Invalid bb input registers: %d\n", UT_INPUT_REGISTERS_ADDRESS + UT_INPUT_REGISTERS_NB);
+        printf("Invalid nb input registers: %d\n", UT_INPUT_REGISTERS_ADDRESS + UT_INPUT_REGISTERS_NB);
         modbus_free(ctx);
         return -1;
     }
@@ -144,10 +144,10 @@ int main(int argc, char*argv[])
             /* Filtered queries return 0 */
         } while (rc == 0);
 
-        if (rc == -1) {
-            /* Connection closed by the client or error */
-            /* We could answer with an exception on EMBBADDATA to indicate
-               illegal data for example */
+        /* The connection is not closed on errors which require on reply such as
+           bad CRC in RTU. */
+        if (rc == -1 && errno != EMBBADCRC) {
+            /* Quit */
             break;
         }
 
@@ -194,7 +194,7 @@ int main(int argc, char*argv[])
                 req[1] = query[1];
                 for (i=0; i < req_length; i++) {
                     printf("(%.2X)", req[i]);
-                    usleep(500);
+                    usleep(5000);
                     send(w_s, (const char*)(req + i), 1, MSG_NOSIGNAL);
                 }
                 continue;
