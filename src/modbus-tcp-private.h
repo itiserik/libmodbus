@@ -13,6 +13,17 @@
 
 #define _MODBUS_TCP_CHECKSUM_LENGTH    0
 
+ssize_t _modbus_tcp_send(modbus_t *ctx, const uint8_t *req, int req_length);
+ssize_t _modbus_tcp_recv(modbus_t *ctx, uint8_t *rsp, int rsp_length);
+
+int _modbus_tcp_connect(modbus_t *ctx);
+int _modbus_tcp_pi_connect(modbus_t *ctx);
+
+void _modbus_tcp_close(modbus_t *ctx);
+int _modbus_tcp_flush(modbus_t *ctx);
+int _modbus_tcp_select(modbus_t *ctx, fd_set *rfds, struct timeval *tv, int length_to_read);
+void _modbus_tcp_free(modbus_t *ctx);
+
 /* In both structures, the transaction ID must be placed on first position
    to have a quick access not dependant of the TCP backend */
 typedef struct _modbus_tcp {

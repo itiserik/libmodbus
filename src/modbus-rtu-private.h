@@ -34,6 +34,9 @@
 #define ENOTSUP WSAEOPNOTSUPP
 #endif
 
+
+
+
 /* WIN32: struct containing serial handle and a receive buffer */
 #define PY_BUF_SIZE 512
 struct win32_ser {
@@ -45,6 +48,20 @@ struct win32_ser {
     DWORD n_bytes;
 };
 #endif /* _WIN32 */
+
+int _modbus_set_slave(modbus_t *ctx, int slave);
+int _modbus_rtu_build_request_basis(modbus_t *ctx, int function,
+                                           int addr, int nb,
+                                           uint8_t *req);
+int _modbus_rtu_build_response_basis(sft_t *sft, uint8_t *rsp);
+int _modbus_rtu_prepare_response_tid(const uint8_t *req, int *req_length);
+int _modbus_rtu_send_msg_pre(uint8_t *req, int req_length);
+int _modbus_rtu_check_integrity(modbus_t *ctx, uint8_t *msg,
+                                const int msg_length);
+int _modbus_rtu_filter_request(modbus_t *ctx, int slave);
+int _modbus_rtu_pre_check_confirmation(modbus_t *ctx, const uint8_t *req,
+                                              const uint8_t *rsp, int rsp_length);
+int _modbus_rtu_receive(modbus_t *ctx, uint8_t *req);
 
 typedef struct _modbus_rtu {
     /* Device: "/dev/ttyS0", "/dev/ttyUSB0" or "/dev/tty.USA19*" on Mac OS X. */

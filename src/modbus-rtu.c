@@ -89,7 +89,7 @@ static const uint8_t table_crc_lo[] = {
 
 /* Define the slave ID of the remote device to talk in master mode or set the
  * internal slave ID in slave mode */
-static int _modbus_set_slave(modbus_t *ctx, int slave)
+int _modbus_set_slave(modbus_t *ctx, int slave)
 {
     /* Broadcast address is 0 (MODBUS_BROADCAST_ADDRESS) */
     if (slave >= 0 && slave <= 247) {
@@ -103,7 +103,7 @@ static int _modbus_set_slave(modbus_t *ctx, int slave)
 }
 
 /* Builds a RTU request header */
-static int _modbus_rtu_build_request_basis(modbus_t *ctx, int function,
+int _modbus_rtu_build_request_basis(modbus_t *ctx, int function,
                                            int addr, int nb,
                                            uint8_t *req)
 {
@@ -119,7 +119,7 @@ static int _modbus_rtu_build_request_basis(modbus_t *ctx, int function,
 }
 
 /* Builds a RTU response header */
-static int _modbus_rtu_build_response_basis(sft_t *sft, uint8_t *rsp)
+int _modbus_rtu_build_response_basis(sft_t *sft, uint8_t *rsp)
 {
     /* In this case, the slave is certainly valid because a check is already
      * done in _modbus_rtu_listen */
@@ -145,14 +145,14 @@ static uint16_t crc16(uint8_t *buffer, uint16_t buffer_length)
     return (crc_hi << 8 | crc_lo);
 }
 
-static int _modbus_rtu_prepare_response_tid(const uint8_t *req, int *req_length)
+int _modbus_rtu_prepare_response_tid(const uint8_t *req, int *req_length)
 {
     (*req_length) -= _MODBUS_RTU_CHECKSUM_LENGTH;
     /* No TID */
     return 0;
 }
 
-static int _modbus_rtu_send_msg_pre(uint8_t *req, int req_length)
+int _modbus_rtu_send_msg_pre(uint8_t *req, int req_length)
 {
     uint16_t crc = crc16(req, req_length);
     req[req_length++] = crc >> 8;
@@ -307,7 +307,7 @@ static ssize_t _modbus_rtu_send(modbus_t *ctx, const uint8_t *req, int req_lengt
 #endif
 }
 
-static int _modbus_rtu_receive(modbus_t *ctx, uint8_t *req)
+int _modbus_rtu_receive(modbus_t *ctx, uint8_t *req)
 {
     int rc;
     modbus_rtu_t *ctx_rtu = ctx->backend_data;
@@ -341,7 +341,7 @@ static ssize_t _modbus_rtu_recv(modbus_t *ctx, uint8_t *rsp, int rsp_length)
 
 static int _modbus_rtu_flush(modbus_t *);
 
-static int _modbus_rtu_pre_check_confirmation(modbus_t *ctx, const uint8_t *req,
+int _modbus_rtu_pre_check_confirmation(modbus_t *ctx, const uint8_t *req,
                                               const uint8_t *rsp, int rsp_length)
 {
     /* Check responding slave is the slave we requested (except for broacast
@@ -362,7 +362,7 @@ static int _modbus_rtu_pre_check_confirmation(modbus_t *ctx, const uint8_t *req,
 /* The check_crc16 function shall return 0 is the message is ignored and the
    message length if the CRC is valid. Otherwise it shall return -1 and set
    errno to EMBADCRC. */
-static int _modbus_rtu_check_integrity(modbus_t *ctx, uint8_t *msg,
+int _modbus_rtu_check_integrity(modbus_t *ctx, uint8_t *msg,
                                        const int msg_length)
 {
     uint16_t crc_calculated;
