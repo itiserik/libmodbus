@@ -217,8 +217,10 @@ int modbus_send_raw_request(modbus_t *ctx, uint8_t *raw_req, int raw_req_length)
         return -1;
     }
 
-    if (raw_req_length < 2) {
-        /* The raw request must contain function and slave at least */
+    if (raw_req_length < 2 || raw_req_length > (MODBUS_MAX_PDU_LENGTH + 1)) {
+        /* The raw request must contain function and slave at least and
+           must not be longer than the maximum pdu length plus the slave
+           address. */
         errno = EINVAL;
         return -1;
     }
@@ -678,10 +680,10 @@ static int response_exception(modbus_t *ctx, sft_t *sft,
 int modbus_reply(modbus_t *ctx, const uint8_t *req,
                  int req_length, modbus_mapping_t *mb_mapping)
 {
-    int offset = ctx->backend->header_length;
-    int slave = req[offset - 1];
-    int function = req[offset];
-    uint16_t address = (req[offset + 1] << 8) + req[offset + 2];
+    int offset;
+    int slave;
+    int function;
+    uint16_t address;
     uint8_t rsp[MAX_MESSAGE_LENGTH];
     int rsp_length = 0;
     sft_t sft;
@@ -690,6 +692,11 @@ int modbus_reply(modbus_t *ctx, const uint8_t *req,
         errno = EINVAL;
         return -1;
     }
+
+    offset = ctx->backend->header_length;
+    slave = req[offset - 1];
+    function = req[offset];
+    address = (req[offset + 1] << 8) + req[offset + 2];
 
     sft.slave = slave;
     sft.function = function;
@@ -1053,15 +1060,16 @@ int modbus_reply(modbus_t *ctx, const uint8_t *req,
         break;
     }
 
-    return send_msg(ctx, rsp, rsp_length);
+    /* Suppress any responses when the request was a broadcast */
+    return (slave == MODBUS_BROADCAST_ADDRESS) ? 0 : send_msg(ctx, rsp, rsp_length);
 }
 
 int modbus_reply_exception(modbus_t *ctx, const uint8_t *req,
                            unsigned int exception_code)
 {
-    int offset = ctx->backend->header_length;
-    int slave = req[offset - 1];
-    int function = req[offset];
+    int offset;
+    int slave;
+    int function;
     uint8_t rsp[MAX_MESSAGE_LENGTH];
     int rsp_length;
     int dummy_length = 99;
@@ -1071,6 +1079,10 @@ int modbus_reply_exception(modbus_t *ctx, const uint8_t *req,
         errno = EINVAL;
         return -1;
     }
+
+    offset = ctx->backend->header_length;
+    slave = req[offset - 1];
+    function = req[offset];
 
     sft.slave = slave;
     sft.function = function + 0x80;;
@@ -1477,14 +1489,17 @@ int modbus_mask_write_register(modbus_t *ctx, int addr, uint16_t and_mask, uint1
 {
     int rc;
     int req_length;
-    uint8_t req[_MIN_REQ_LENGTH];
+    /* The request length can not exceed _MIN_REQ_LENGTH - 2 and 4 bytes to
+     * store the masks. The ugly substraction is there to remove the 'nb' value
+     * (2 bytes) which is not used. */
+    uint8_t req[_MIN_REQ_LENGTH + 2];
 
     req_length = ctx->backend->build_request_basis(ctx,
                                                    MODBUS_FC_MASK_WRITE_REGISTER,
                                                    addr, 0, req);
 
     /* HACKISH, count is not used */
-    req_length -=2;
+    req_length -= 2;
 
     req[req_length++] = and_mask >> 8;
     req[req_length++] = and_mask & 0x00ff;
